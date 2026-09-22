@@ -15,11 +15,5 @@ class Product extends Model
     {
         return $this->hasMany(ProductVariant::class);
     }
-
-    public function variantOptions()
-    {
-        return $this->belongsToMany(VariantOption::class, 'product_variants')
-            ->withPivot('price', 'stock')
-            ->withTimestamps();
-    }
+    public
 }

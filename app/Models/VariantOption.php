@@ -8,4 +8,8 @@ class VariantOption extends Model
 {
     //
     protected $fillable = ['name'];
+    public function variant()
+    {
+        return $this->belongsTo(Variant::class);
+    }
 }
