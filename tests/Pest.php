@@ -1,5 +1,9 @@
 <?php
 
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\Variant;
+use App\Models\VariantOption;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +48,14 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function shopProductWithVariant(): array
 {
-    // ..
+    $product = Product::factory()->create(['name' => 'Classic T-Shirt']);
+    $size = Variant::factory()->create(['name' => 'Size', 'product_id' => $product->id]);
+    $large = VariantOption::factory()->create(['name' => 'Large', 'variant_id' => $size->id]);
+
+    $variant = ProductVariant::factory()->create(['product_id' => $product->id, 'price' => 19.99, 'stock' => 5]);
+    $variant->variantOptions()->sync([$large->id]);
+
+    return [$product, $variant];
 }

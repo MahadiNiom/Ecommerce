@@ -15,10 +15,11 @@ class RolesAndPermissionsSeeder extends Seeder
     public function run(): void
     {
         $manageProducts = Permission::firstOrCreate(['name' => 'manage products']);
+        $manageOrders = Permission::firstOrCreate(['name' => 'manage orders']);
         $manageRoles = Permission::firstOrCreate(['name' => 'manage roles and permissions']);
 
         $admin = Role::firstOrCreate(['name' => 'admin']);
-        $admin->syncPermissions([$manageProducts, $manageRoles]);
+        $admin->syncPermissions([$manageProducts, $manageOrders, $manageRoles]);
 
         $userRole = Role::firstOrCreate(['name' => 'user']);
 

@@ -6,7 +6,7 @@
     <title>@yield('title', config('app.name', 'Laravel'))</title>
 </head>
 <body>
-@include('components.navbar')
+@include('components.dashboard-navbar')
 
 @yield('content')
 

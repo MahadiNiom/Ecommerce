@@ -29,6 +29,9 @@
     </p>
     @if($product->productVariants->isEmpty())
         <p>No product variants.</p>
+        @if ($product->price !== null)
+            <p>Product price: ${{ $product->price }} / Stock: {{ $product->stock }}</p>
+        @endif
     @else
         <table border="1" cellpadding="5" cellspacing="0">
             <thead>
