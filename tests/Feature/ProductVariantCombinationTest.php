@@ -2,11 +2,23 @@
 
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\User;
 use App\Models\Variant;
 use App\Models\VariantOption;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 
 uses(RefreshDatabase::class);
+
+function actingAsAdmin(): User
+{
+    $admin = User::factory()->create();
+    $admin->givePermissionTo(Permission::findOrCreate('manage products'));
+
+    test()->actingAs($admin);
+
+    return $admin;
+}
 
 function combinationKey(int ...$optionIds): string
 {
@@ -24,6 +36,8 @@ function combinationFields(int ...$optionIds): array
 }
 
 it('generates product variants for every option combination', function () {
+    actingAsAdmin();
+
     $product = Product::factory()->create();
 
     $color = Variant::factory()->create(['name' => 'Color', 'product_id' => $product->id]);
@@ -58,6 +72,8 @@ it('generates product variants for every option combination', function () {
 });
 
 it('updates an existing product variant when its combination is re-assigned', function () {
+    actingAsAdmin();
+
     $product = Product::factory()->create();
 
     $color = Variant::factory()->create(['name' => 'Color', 'product_id' => $product->id]);
@@ -87,6 +103,8 @@ it('updates an existing product variant when its combination is re-assigned', fu
 });
 
 it('deletes a product variant when its combination is deselected', function () {
+    actingAsAdmin();
+
     $product = Product::factory()->create();
 
     $color = Variant::factory()->create(['name' => 'Color', 'product_id' => $product->id]);
@@ -106,6 +124,8 @@ it('deletes a product variant when its combination is deselected', function () {
 });
 
 it('rejects a combination containing an option that does not belong to the product', function () {
+    actingAsAdmin();
+
     $product = Product::factory()->create();
 
     $color = Variant::factory()->create(['name' => 'Color', 'product_id' => $product->id]);
@@ -123,6 +143,8 @@ it('rejects a combination containing an option that does not belong to the produ
 });
 
 it('creates a product variant from a chosen combination', function () {
+    actingAsAdmin();
+
     $product = Product::factory()->create();
 
     $color = Variant::factory()->create(['name' => 'Color', 'product_id' => $product->id]);
@@ -146,6 +168,8 @@ it('creates a product variant from a chosen combination', function () {
 });
 
 it('lists every combination on the generation page', function () {
+    actingAsAdmin();
+
     $product = Product::factory()->create();
 
     $color = Variant::factory()->create(['name' => 'Color', 'product_id' => $product->id]);
@@ -167,6 +191,8 @@ it('lists every combination on the generation page', function () {
 });
 
 it('rejects creation when two options come from the same variant', function () {
+    actingAsAdmin();
+
     $product = Product::factory()->create();
 
     $color = Variant::factory()->create(['name' => 'Color', 'product_id' => $product->id]);
