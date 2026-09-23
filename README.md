@@ -1,59 +1,111 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Matir Shaad
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+An e-commerce application built with Laravel 12 for selling fresh, hand-picked goods. It features a customer-facing storefront (catalog, cart, wishlist, checkout, order history) and a full admin backend with granular, role-based access control.
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Backend:** Laravel 12, PHP 8.2
+- **Database:** SQLite (default)
+- **Auth & RBAC:** Laravel Breeze + [spatie/laravel-permission](https://spatie.be/docs/laravel-permission/v6) with granular permissions
+- **Frontend:** Blade + Tailwind CSS 3 + Alpine.js, bundled with Vite
+- **Testing:** Pest (PHPUnit under the hood), Laravel Pint for formatting
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Storefront
+- Public shop with category, brand, and tag filtering
+- Product detail pages with variant support (combination pricing, stock levels)
+- Cart and wishlist (guest + authenticated)
+- Checkout and order placement
+- Personal order history and order status tracking
 
-## Learning Laravel
+### Admin (role-gated)
+- Product, category, brand, and tag CRUD
+- Variant types and variant options per product
+- Product variant combinations (auto-generated from selected options)
+- Order management and status updates
+- User management and role assignment
+- Role management with per-permission selection
+- Permission CRUD
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Access Control
+Granular, per-action permissions replace the older coarse "module" permissions. They live as named constants in `app/Support/Permissions.php` and are grouped into three modules:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+| Module | Permissions |
+| --- | --- |
+| Catalog | `view / create / edit / delete` x `products`, `categories`, `brands`, `tags` |
+| Orders | `view orders`, `update order status` |
+| Access control | `view / create / edit / delete` x `roles`, `permissions`; `view users`, `assign roles` |
 
-## Laravel Sponsors
+- Routes are protected per action via `permission:` middleware (e.g. `products.store` requires `create products`), and UI links/buttons are hidden using `Permissions::canAny()`.
+- A user's effective permissions are the **union** of all their assigned roles.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Requirements
 
-### Premium Partners
+- PHP 8.2+
+- Composer
+- Node.js 20+ (for frontend build tooling)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Installation
 
-## Contributing
+```bash
+composer install
+npm install
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Environment setup (creates .env, generates app key)
+@php -r "file_exists('.env') || copy('.env.example', '.env');"
+php artisan key:generate
 
-## Code of Conduct
+# Database (SQLite)
+php artisan migrate --seed
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+`setup` is also available as a Composer script (`composer run setup`) that runs install, env setup, migrations, and the frontend build.
 
-## Security Vulnerabilities
+### Demo data & default login
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Running `php artisan db:seed` (or `migrate --seed`) creates:
 
-## License
+- Roles: `admin` (all 28 permissions) and `user`
+- Demo admin: `admin@example.com` / `password`
+- A small catalog: a variant-enabled "Classic T-Shirt" and a variant-less "Canvas Tote Bag", with a "Clothing" category, "Acme Apparel" brand, and a couple of tags.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+To start from scratch: `php artisan migrate:fresh --seed`.
+
+## Development
+
+```bash
+php artisan serve        # app server
+npm run dev              # Vite dev server (HMR)
+composer run dev         # server + queue + pail logs + Vite concurrently
+```
+
+If a frontend change doesn't appear in the UI, run `npm run build` (or keep `npm run dev` running).
+
+## Testing
+
+```bash
+php artisan test
+# or with the compact reporter:
+php artisan test --compact
+
+# Formatting:
+vendor/bin/pint
+```
+
+The suite covers storefront behavior, catalog CRUD, order management, product-variant combinations, and role/permission access control (including multi-role union access).
+
+## Project Structure
+
+```
+app/
+  Http/Controllers/       # Web controllers (incl. admin-prefixed order management)
+  Models/                 # Eloquent models
+  Support/Permissions.php # Single source of truth for permission names + canAny()
+database/
+  migrations/             # Schema (permission tables via spatie/laravel-permission)
+  seeders/                # Roles + granular permissions, demo catalog
+resources/views/          # Blade + Tailwind/Alpine UI
+routes/web.php            # Web routes with per-action permission middleware
+tests/Feature/            # Pest feature tests
+```
