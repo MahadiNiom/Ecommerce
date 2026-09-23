@@ -2,23 +2,44 @@
 
 namespace App\Models;
 
+use Database\Factories\ProductVariantFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class ProductVariant extends Model
 {
-    //
-    protected $fillable = ['product_id', 'variant_id', 'variant_option_id', 'price', 'stock'];
-    public function product()
+    /** @use HasFactory<ProductVariantFactory> */
+    use HasFactory;
+
+    protected $fillable = ['product_id', 'price', 'stock'];
+
+    protected function casts(): array
+    {
+        return [
+            'price' => 'decimal:2',
+            'stock' => 'integer',
+        ];
+    }
+
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
-    public function variant()
+
+    public function variantOptions(): BelongsToMany
     {
-        return $this->belongsTo(Variant::class);
+        return $this->belongsToMany(VariantOption::class);
     }
-    public function variantOption()
+
+    /**
+     * Human-readable label for the combination, e.g. "Color: Red / Size: Small".
+     */
+    public function combinationLabel(): string
     {
-        return $this->belongsTo(VariantOption::class);
+        return $this->variantOptions
+            ->map(fn (VariantOption $option) => "{$option->variant->name}: {$option->name}")
+            ->join(' / ');
     }
-    
 }

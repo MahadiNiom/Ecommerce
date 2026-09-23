@@ -1,8 +1,8 @@
 @extends("base")
 
 @section("content")
-    <h1>Create Product</h1>
-    <form action="{{ route('products.store') }}" method="POST">
+    <h1>Create Option for {{ $variant->name }}</h1>
+    <form action="{{ route('variants.variant-options.store', $variant) }}" method="POST">
         @csrf
         <div>
             <label for="name">Name</label>
@@ -13,5 +13,5 @@
         </div>
         <button type="submit">Create</button>
     </form>
-    <p><a href="{{ route('products.index') }}">Back to products</a></p>
+    <p><a href="{{ route('variants.variant-options.index', $variant) }}">Back to options</a></p>
 @endsection

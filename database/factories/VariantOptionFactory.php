@@ -2,13 +2,14 @@
 
 namespace Database\Factories;
 
-use App\Models\Product;
+use App\Models\Variant;
+use App\Models\VariantOption;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Product>
+ * @extends Factory<VariantOption>
  */
-class ProductFactory extends Factory
+class VariantOptionFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -18,7 +19,8 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->words(3, true),
+            'name' => fake()->randomElement(['Red', 'Blue', 'Small', 'Large', 'Cotton']),
+            'variant_id' => Variant::factory(),
         ];
     }
 }

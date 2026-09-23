@@ -3,12 +3,13 @@
 namespace Database\Factories;
 
 use App\Models\Product;
+use App\Models\Variant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Product>
+ * @extends Factory<Variant>
  */
-class ProductFactory extends Factory
+class VariantFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -18,7 +19,8 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->words(3, true),
+            'name' => fake()->randomElement(['Color', 'Size', 'Material']),
+            'product_id' => Product::factory(),
         ];
     }
 }
