@@ -3,25 +3,31 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Support\Permissions;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
     /**
-     * Seed roles, permissions, and a demo admin user.
+     * Seed granular permissions, roles, and a demo admin user.
      */
     public function run(): void
     {
-        $manageProducts = Permission::firstOrCreate(['name' => 'manage products']);
-        $manageOrders = Permission::firstOrCreate(['name' => 'manage orders']);
-        $manageRoles = Permission::firstOrCreate(['name' => 'manage roles and permissions']);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        foreach (Permissions::all() as $permissionName) {
+            Permission::firstOrCreate(['name' => $permissionName]);
+        }
 
         $admin = Role::firstOrCreate(['name' => 'admin']);
-        $admin->syncPermissions([$manageProducts, $manageOrders, $manageRoles]);
+        $admin->syncPermissions(Permissions::all());
 
         $userRole = Role::firstOrCreate(['name' => 'user']);
+
+        Permission::whereIn('name', ['manage products', 'manage orders', 'manage roles and permissions'])->delete();
 
         $adminUser = User::firstOrCreate([
             'email' => 'admin@example.com',
@@ -33,6 +39,8 @@ class RolesAndPermissionsSeeder extends Seeder
         if (! $adminUser->hasRole('admin')) {
             $adminUser->assignRole($admin);
         }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $this->command?->info("Roles: '{$admin->name}', '{$userRole->name}'. Admin login: admin@example.com / password");
     }

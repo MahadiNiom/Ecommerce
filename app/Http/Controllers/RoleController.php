@@ -35,9 +35,19 @@ class RoleController extends Controller
     public function store(StoreRoleRequest $request): RedirectResponse
     {
         $role = Role::create(['name' => $request->name]);
-        $role->syncPermissions($request->input('permissions', []));
+        $role->syncPermissions($this->permissionIds($request));
 
         return redirect()->route('roles.index')->with('success', 'Role created successfully.');
+    }
+
+    /**
+     * Cast submitted permission id strings to integers so Spatie resolves them by id.
+     *
+     * @return array<int, int>
+     */
+    private function permissionIds(StoreRoleRequest|UpdateRoleRequest $request): array
+    {
+        return array_map('intval', $request->input('permissions', []));
     }
 
     /**
@@ -57,7 +67,7 @@ class RoleController extends Controller
     public function update(UpdateRoleRequest $request, Role $role): RedirectResponse
     {
         $role->update(['name' => $request->name]);
-        $role->syncPermissions($request->input('permissions', []));
+        $role->syncPermissions($this->permissionIds($request));
 
         return redirect()->route('roles.index')->with('success', 'Role updated successfully.');
     }

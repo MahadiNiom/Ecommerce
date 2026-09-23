@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\Permissions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -11,7 +12,9 @@ function rolesActingAdmin(): User
 {
     $admin = User::factory()->create();
 
-    $admin->givePermissionTo(Permission::findOrCreate('manage roles and permissions'));
+    foreach (Permissions::roles() as $name) {
+        $admin->givePermissionTo(Permission::findOrCreate($name));
+    }
 
     test()->actingAs($admin);
 
@@ -25,7 +28,7 @@ it('lists roles for a user with the manage roles permission', function () {
     $this->get(route('roles.index'))
         ->assertOk()
         ->assertSee('editor')
-        ->assertSee('Create Role');
+        ->assertSee('Create role');
 });
 
 it('creates a role with its permissions', function () {
@@ -70,6 +73,19 @@ it('rejects creating a role with a duplicate name', function () {
         ->assertSessionHasErrors('name');
 
     $this->assertDatabaseCount('roles', 1);
+});
+
+it('accepts permission ids submitted as strings from the checkbox form', function () {
+    rolesActingAdmin();
+    $role = Role::create(['name' => 'editor']);
+    $permission = Permission::create(['name' => 'publish posts']);
+
+    $this->put(route('roles.update', $role), [
+        'name' => 'editor',
+        'permissions' => [(string) $permission->id],
+    ])->assertRedirect(route('roles.index'));
+
+    expect($role->refresh()->hasPermissionTo('publish posts'))->toBeTrue();
 });
 
 it('rejects assigning a permission that does not exist', function () {

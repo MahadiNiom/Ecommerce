@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\Permissions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 
@@ -10,7 +11,9 @@ function permissionsActingAdmin(): User
 {
     $admin = User::factory()->create();
 
-    $admin->givePermissionTo(Permission::findOrCreate('manage roles and permissions'));
+    foreach (Permissions::permissions() as $name) {
+        $admin->givePermissionTo(Permission::findOrCreate($name));
+    }
 
     test()->actingAs($admin);
 
@@ -24,7 +27,7 @@ it('lists permissions for a user with the manage roles permission', function () 
     $this->get(route('permissions.index'))
         ->assertOk()
         ->assertSee('publish posts')
-        ->assertSee('Create Permission');
+        ->assertSee('Create permission');
 });
 
 it('creates a permission', function () {

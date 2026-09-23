@@ -5,6 +5,7 @@ use App\Models\ProductVariant;
 use App\Models\User;
 use App\Models\Variant;
 use App\Models\VariantOption;
+use App\Support\Permissions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 
@@ -13,7 +14,10 @@ uses(RefreshDatabase::class);
 function actingAsAdmin(): User
 {
     $admin = User::factory()->create();
-    $admin->givePermissionTo(Permission::findOrCreate('manage products'));
+
+    foreach (Permissions::catalog() as $name) {
+        $admin->givePermissionTo(Permission::findOrCreate($name));
+    }
 
     test()->actingAs($admin);
 

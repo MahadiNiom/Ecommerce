@@ -3,6 +3,7 @@
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\User;
+use App\Support\Permissions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 
@@ -11,7 +12,10 @@ uses(RefreshDatabase::class);
 function orderManagementActingAdmin(): User
 {
     $admin = User::factory()->create();
-    $admin->givePermissionTo(Permission::findOrCreate('manage orders'));
+
+    foreach (Permissions::orders() as $name) {
+        $admin->givePermissionTo(Permission::findOrCreate($name));
+    }
 
     test()->actingAs($admin);
 

@@ -63,8 +63,8 @@ it('shows product details on the shop page for a guest', function () {
         ->assertOk()
         ->assertSee('Classic T-Shirt')
         ->assertSee('Size: Large')
-        ->assertSee('Login to buy')
-        ->assertDontSee('Add to Cart');
+        ->assertSee('Log in to buy')
+        ->assertDontSee('Add to cart');
 });
 
 it('shows add to cart controls on the shop page for an authenticated user', function () {
@@ -74,8 +74,8 @@ it('shows add to cart controls on the shop page for an authenticated user', func
 
     $this->get(route('shop.show', $variant->product))
         ->assertOk()
-        ->assertSee('Add to Cart')
-        ->assertDontSee('Login to buy');
+        ->assertSee('Add to cart')
+        ->assertDontSee('Log in to buy');
 });
 
 it('shows the price of a variant-less product on the shop index', function () {
@@ -93,9 +93,9 @@ it('shows price and buy controls for a variant-less product to a guest', functio
     $this->get(route('shop.show', $product))
         ->assertOk()
         ->assertSee('Canvas Tote Bag')
-        ->assertSee('Price: $24.99')
-        ->assertSee('Login to buy')
-        ->assertDontSee('Add to Cart');
+        ->assertSee('$24.99')
+        ->assertSee('Log in to buy')
+        ->assertDontSee('Add to cart');
 });
 
 it('shows add to cart controls for a variant-less product to an authenticated user', function () {
@@ -105,8 +105,8 @@ it('shows add to cart controls for a variant-less product to an authenticated us
 
     $this->get(route('shop.show', $product))
         ->assertOk()
-        ->assertSee('Add to Cart')
-        ->assertDontSee('Login to buy');
+        ->assertSee('Add to cart')
+        ->assertDontSee('Log in to buy');
 });
 
 it('marks a variant-less product without a price as unavailable', function () {

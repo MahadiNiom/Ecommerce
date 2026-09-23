@@ -5,6 +5,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Tag;
 use App\Models\User;
+use App\Support\Permissions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 
@@ -13,7 +14,10 @@ uses(RefreshDatabase::class);
 function catalogActingAdmin(): User
 {
     $admin = User::factory()->create();
-    $admin->givePermissionTo(Permission::findOrCreate('manage products'));
+
+    foreach (Permissions::catalog() as $name) {
+        $admin->givePermissionTo(Permission::findOrCreate($name));
+    }
 
     test()->actingAs($admin);
 
@@ -27,7 +31,7 @@ it('lists categories for a user with the manage products permission', function (
     $this->get(route('categories.index'))
         ->assertOk()
         ->assertSee('Clothing')
-        ->assertSee('Create Category');
+        ->assertSee('Create category');
 });
 
 it('creates a category', function () {
@@ -149,7 +153,7 @@ it('shows the subcategory indented under its parent on the index', function () {
     $this->get(route('categories.index'))
         ->assertOk()
         ->assertSee('Men', false)
-        ->assertSee('└ Shirts', false);
+        ->assertSee('↳ Shirts', false);
 });
 
 it('excludes a category and its descendants from the parent options on edit', function () {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\Permissions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -11,7 +12,9 @@ function userRolesActingAdmin(): User
 {
     $admin = User::factory()->create();
 
-    $admin->givePermissionTo(Permission::findOrCreate('manage roles and permissions'));
+    foreach (Permissions::users() as $name) {
+        $admin->givePermissionTo(Permission::findOrCreate($name));
+    }
 
     test()->actingAs($admin);
 
@@ -61,6 +64,31 @@ it('rejects assigning a role that does not exist', function () {
         ->assertSessionHasErrors('roles.0');
 
     $this->assertDatabaseCount('model_has_roles', 0);
+});
+
+it('accepts role ids submitted as strings from the checkbox form', function () {
+    userRolesActingAdmin();
+    $user = User::factory()->create();
+    $role = Role::create(['name' => 'editor']);
+
+    $this->put(route('users.roles.update', $user), ['roles' => [(string) $role->id]])
+        ->assertRedirect(route('users.index'));
+
+    expect($user->fresh()->hasRole('editor'))->toBeTrue();
+});
+
+it('grants the union of permissions across multiple roles', function () {
+    $user = User::factory()->create();
+    $productRole = Role::create(['name' => 'product viewer']);
+    $productRole->givePermissionTo(Permission::findOrCreate('view products'));
+    $orderRole = Role::create(['name' => 'order viewer']);
+    $orderRole->givePermissionTo(Permission::findOrCreate('view orders'));
+    $user->assignRole([$productRole, $orderRole]);
+    $this->actingAs($user);
+
+    $this->get(route('products.index'))->assertOk();
+    $this->get(route('admin.orders.index'))->assertOk();
+    $this->get(route('users.index'))->assertForbidden();
 });
 
 it('forbids managing users without the manage roles permission', function () {

@@ -1,83 +1,100 @@
-@extends("base")
+@extends('base')
 
-@section("content")
-    <h1>Edit Product</h1>
-    <form action="{{ route('products.update', $product) }}" method="POST">
-        @csrf
-        @method('PUT')
-        <div>
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name" value="{{ old('name', $product->name) }}">
-            @error('name')
-                <div>{{ $message }}</div>
-            @enderror
+@section('title', 'Edit Product - ' . config('app.name'))
+
+@section('content')
+    <a href="{{ route('products.show', $product) }}" class="link inline-flex items-center gap-1 text-sm animate-fade-in-up">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+        Back to product
+    </a>
+
+    <div class="mt-6 max-w-2xl animate-fade-in-up">
+        <h1 class="page-title">Edit product</h1>
+        <div class="card mt-6 p-6 sm:p-8">
+            <form action="{{ route('products.update', $product) }}" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <div class="field sm:col-span-2">
+                        <label for="name" class="label">Name</label>
+                        <input type="text" id="name" name="name" value="{{ old('name', $product->name) }}" class="input">
+                        @error('name')
+                            <span class="error-text">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="field">
+                        <label for="price" class="label">Price</label>
+                        <input type="number" id="price" name="price" step="0.01" min="0" value="{{ old('price', $product->price) }}" class="input">
+                        @error('price')
+                            <span class="error-text">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="field">
+                        <label for="stock" class="label">Stock</label>
+                        <input type="number" id="stock" name="stock" min="0" value="{{ old('stock', $product->stock) }}" class="input">
+                        @error('stock')
+                            <span class="error-text">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+                <p class="mb-5 -mt-2 text-xs text-stone-500">Price and stock apply only to products without variants.</p>
+
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <div class="field">
+                        <label for="category_id" class="label">Category</label>
+                        <select id="category_id" name="category_id" class="select">
+                            <option value="">-- None --</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}" {{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('category_id')
+                            <span class="error-text">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="field">
+                        <label for="brand_id" class="label">Brand</label>
+                        <select id="brand_id" name="brand_id" class="select">
+                            <option value="">-- None --</option>
+                            @foreach ($brands as $brand)
+                                <option value="{{ $brand->id }}" {{ old('brand_id', $product->brand_id) == $brand->id ? 'selected' : '' }}>{{ $brand->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('brand_id')
+                            <span class="error-text">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="description" class="label">Description</label>
+                    <textarea id="description" name="description" rows="4" class="input">{{ old('description', $product->description) }}</textarea>
+                    @error('description')
+                        <span class="error-text">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <fieldset class="fieldset">
+                    <legend class="legend">Tags</legend>
+                    @forelse ($tags as $tag)
+                        <label class="mb-2 flex items-center gap-2 text-sm text-stone-700 last:mb-0">
+                            <input type="checkbox" name="tags[]" value="{{ $tag->id }}" class="checkbox"
+                                   {{ in_array($tag->id, old('tags', $product->tags->pluck('id')->all())) ? 'checked' : '' }}>
+                            {{ $tag->name }}
+                        </label>
+                    @empty
+                        <p class="text-sm text-stone-500">No tags exist yet. <a href="{{ route('tags.create') }}" class="link">Create one</a>.</p>
+                    @endforelse
+                    @error('tags')
+                        <span class="error-text">{{ $message }}</span>
+                    @enderror
+                </fieldset>
+
+                <div class="flex items-center justify-end gap-3">
+                    <a href="{{ route('products.show', $product) }}" class="btn-ghost">Cancel</a>
+                    <button type="submit" class="btn-primary">Update product</button>
+                </div>
+            </form>
         </div>
-        <div>
-            <label for="price">Price</label>
-            <input type="number" id="price" name="price" step="0.01" min="0" value="{{ old('price', $product->price) }}">
-            @error('price')
-                <div>{{ $message }}</div>
-            @enderror
-        </div>
-        <div>
-            <label for="stock">Stock</label>
-            <input type="number" id="stock" name="stock" min="0" value="{{ old('stock', $product->stock) }}">
-            @error('stock')
-                <div>{{ $message }}</div>
-            @enderror
-        </div>
-        <p><small>Price and stock apply only to products without variants.</small></p>
-        <div>
-            <label for="category_id">Category</label>
-            <select id="category_id" name="category_id">
-                <option value="">-- None --</option>
-                @foreach($categories as $category)
-                    <option value="{{ $category->id }}" {{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>
-                        {{ str_repeat('&nbsp;&nbsp;', $category->depth) }}{{ $category->name }}
-                    </option>
-                @endforeach
-            </select>
-            @error('category_id')
-                <div>{{ $message }}</div>
-            @enderror
-        </div>
-        <div>
-            <label for="brand_id">Brand</label>
-            <select id="brand_id" name="brand_id">
-                <option value="">-- None --</option>
-                @foreach($brands as $brand)
-                    <option value="{{ $brand->id }}" {{ old('brand_id', $product->brand_id) == $brand->id ? 'selected' : '' }}>
-                        {{ $brand->name }}
-                    </option>
-                @endforeach
-            </select>
-            @error('brand_id')
-                <div>{{ $message }}</div>
-            @enderror
-        </div>
-        <div>
-            <label for="description">Description</label>
-            <textarea id="description" name="description" rows="4">{{ old('description', $product->description) }}</textarea>
-            @error('description')
-                <div>{{ $message }}</div>
-            @enderror
-        </div>
-        <fieldset>
-            <legend>Tags</legend>
-            @forelse($tags as $tag)
-                <label style="display:block;">
-                    <input type="checkbox" name="tags[]" value="{{ $tag->id }}"
-                           {{ in_array($tag->id, old('tags', $product->tags->pluck('id')->all())) ? 'checked' : '' }}>
-                    {{ $tag->name }}
-                </label>
-            @empty
-                <p>No tags exist yet. <a href="{{ route('tags.create') }}">Create one</a>.</p>
-            @endforelse
-            @error('tags')
-                <div>{{ $message }}</div>
-            @enderror
-        </fieldset>
-        <button type="submit">Update</button>
-    </form>
-    <p><a href="{{ route('products.show', $product) }}">Back to product</a></p>
+    </div>
 @endsection

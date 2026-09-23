@@ -36,7 +36,7 @@ class UserRoleController extends Controller
      */
     public function update(UpdateUserRolesRequest $request, User $user): RedirectResponse
     {
-        $user->syncRoles($request->input('roles', []));
+        $user->syncRoles(array_map('intval', $request->input('roles', [])));
 
         return redirect()->route('users.index')->with('success', 'Roles updated successfully.');
     }
