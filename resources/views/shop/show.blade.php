@@ -93,66 +93,148 @@
                         </div>
                     @endif
                 @else
-                    <p class="text-sm text-stone-500">Starting price</p>
-                    <p class="text-3xl font-bold text-emerald-700">From ${{ number_format($product->productVariants->min('price'), 2) }}</p>
-                    <p class="mt-3 text-sm text-stone-500">Choose a variant below to add to your cart.</p>
+                    @php
+                        $firstPv = $product->productVariants->first();
+                        $variantTypes = $product->variants
+                            ->map(fn (App\Models\Variant $variant) => [
+                                'id' => $variant->id,
+                                'name' => $variant->name,
+                                'options' => $variant->variantOptions
+                                    ->map(fn (App\Models\VariantOption $option) => ['id' => $option->id, 'name' => $option->name])
+                                    ->values(),
+                            ])
+                            ->values();
+                        $variantCombinations = $product->productVariants
+                            ->map(fn (App\Models\ProductVariant $pv) => [
+                                'id' => $pv->id,
+                                'price' => (float) $pv->price,
+                                'stock' => $pv->stock,
+                                'option_ids' => $pv->variantOptions->pluck('id')->map(fn (int $id) => $id)->values(),
+                            ])
+                            ->values();
+                    @endphp
+
+                    <div
+                        x-data="{
+                            types: @js($variantTypes),
+                            combinations: @js($variantCombinations),
+                            selection: {},
+                            selected: null,
+                            selectedLabel: '',
+                            selectedPrice: '',
+                            selectedStock: 0,
+                            qty: 1,
+                            init() {
+                                this.types.forEach((type) => {
+                                    if (type.options.length > 0) {
+                                        this.selection[type.id] = type.options[0].id;
+                                    }
+                                });
+                                this.recompute();
+                            },
+                            select(typeId, optionId) {
+                                this.selection[typeId] = optionId;
+                                this.recompute();
+                                this.qty = Math.max(1, Math.min(this.qty, this.selectedStock || 1));
+                            },
+                            isSelected(typeId, optionId) {
+                                return this.selection[typeId] === optionId;
+                            },
+                            recompute() {
+                                const isComplete = this.types.every((type) => this.selection[type.id] !== undefined);
+                                const chosen = this.types.map((type) => this.selection[type.id]);
+                                this.selected = isComplete
+                                    ? this.combinations.find((combination) => chosen.every((id) => combination.option_ids.includes(id))) ?? null
+                                    : null;
+
+                                if (this.selected) {
+                                    this.selectedLabel = this.types
+                                        .map((type) => {
+                                            const option = type.options.find((option) => option.id === this.selection[type.id]);
+                                            return option ? `${type.name}: ${option.name}` : null;
+                                        })
+                                        .filter(Boolean)
+                                        .join(' / ');
+                                    this.selectedPrice = Number(this.selected.price).toFixed(2);
+                                    this.selectedStock = this.selected.stock;
+                                } else {
+                                    this.selectedLabel = '';
+                                    this.selectedPrice = '';
+                                    this.selectedStock = 0;
+                                }
+                            }
+                        }">
+                        <p class="text-sm text-stone-500">Select options</p>
+
+                        <template x-for="type in types" :key="`type-${type.id}`">
+                            <div class="mt-4">
+                                <label class="label" x-text="type.name"></label>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="option in type.options" :key="`option-${option.id}`">
+                                        <button type="button"
+                                            @click="select(type.id, option.id)"
+                                            class="rounded-xl border px-3 py-1.5 text-sm font-medium transition-colors"
+                                            :class="isSelected(type.id, option.id)
+                                                ? 'border-emerald-600 bg-emerald-600 text-white shadow-soft'
+                                                : 'border-stone-300 bg-white text-stone-600 hover:border-emerald-400 hover:text-emerald-700'"
+                                            x-text="option.name"></button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div class="mt-5" x-show="selected">
+                            <p class="text-sm font-semibold text-stone-500"><span x-text="selectedLabel">{{ $firstPv?->combinationLabel() }}</span></p>
+                            <p class="mt-1 text-3xl font-bold text-emerald-700"><span x-text="selectedPrice">${{ $firstPv ? number_format((float) $firstPv->price, 2) : '0.00' }}</span></p>
+                            <span class="mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold"
+                                :class="selectedStock > 0 ? 'badge-green' : 'badge-red'">
+                                <span x-text="selectedStock > 0 ? selectedStock + ' in stock' : 'Out of stock'">{{ $firstPv && $firstPv->stock > 0 ? $firstPv->stock.' in stock' : 'Out of stock' }}</span>
+                            </span>
+                        </div>
+
+                        <div class="mt-6 rounded-xl bg-stone-50 p-4 text-center" x-cloak x-show="selected && selectedStock < 1">
+                            <p class="text-sm font-medium text-stone-600">This combination is out of stock.</p>
+                        </div>
+
+                        <div class="mt-6 rounded-xl bg-amber-50 p-4 text-center" x-cloak x-show="!selected">
+                            <p class="text-sm font-medium text-amber-800">This combination is not available right now.</p>
+                        </div>
+
+                        @auth
+                            <div class="mt-6 space-y-3" x-show="selected && selectedStock > 0" x-cloak>
+                                <form action="{{ route('cart.store') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="product_variant_id" :value="selected.id" value="{{ $firstPv?->id }}">
+                                    <input type="hidden" name="quantity" :value="qty">
+                                    <label class="label">Quantity</label>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" @click="qty = Math.max(1, qty - 1)" class="btn-outline btn-sm !px-3">&#8722;</button>
+                                        <input type="number" x-model.number="qty" :max="selectedStock" min="1" class="input text-center">
+                                        <button type="button" @click="qty = Math.min(selectedStock, qty + 1)" class="btn-outline btn-sm !px-3">+</button>
+                                    </div>
+                                    <button type="submit" class="btn-primary mt-4 w-full">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
+                                        Add to cart
+                                    </button>
+                                </form>
+                                <form action="{{ route('wishlist.store') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="product_variant_id" :value="selected.id" value="{{ $firstPv?->id }}">
+                                    <button type="submit" class="btn-outline w-full">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+                                        Add to wishlist
+                                    </button>
+                                </form>
+                            </div>
+                        @else
+                            <div class="mt-6 rounded-xl bg-stone-50 p-4 text-center" x-show="selected && selectedStock > 0" x-cloak>
+                                <p class="text-sm text-stone-600">Ready to order?</p>
+                                <a href="{{ route('login') }}" class="btn-primary mt-3 w-full">Log in to buy</a>
+                            </div>
+                        @endauth
+                    </div>
                 @endif
             </div>
         </aside>
     </div>
-
-    {{-- Variants --}}
-    @if ($product->productVariants->isNotEmpty())
-        <section class="mt-12 animate-fade-in-up [animation-delay:0.2s]">
-            <h2 class="text-2xl font-bold text-stone-900">Available variants</h2>
-            <div class="table-wrap mt-4">
-                <table class="table">
-                    <thead>
-                    <tr>
-                        <th>Options</th>
-                        <th>Price</th>
-                        <th>Stock</th>
-                        <th class="text-right">Action</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @foreach ($product->productVariants as $variant)
-                        <tr>
-                            <td class="font-medium text-stone-800">{{ $variant->combinationLabel() }}</td>
-                            <td>${{ $variant->price }}</td>
-                            <td>
-                                @if ($variant->stock > 0)
-                                    <span class="badge-green">{{ $variant->stock }} in stock</span>
-                                @else
-                                    <span class="badge-red">Out of stock</span>
-                                @endif
-                            </td>
-                            <td>
-                                <div class="flex items-center justify-end gap-2">
-                                    @if ($variant->stock > 0)
-                                        @auth
-                                            <form action="{{ route('cart.store') }}" method="POST" class="inline">
-                                                @csrf
-                                                <input type="hidden" name="product_variant_id" value="{{ $variant->id }}">
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="btn-primary btn-sm">Add to cart</button>
-                                            </form>
-                                            <form action="{{ route('wishlist.store') }}" method="POST" class="inline">
-                                                @csrf
-                                                <input type="hidden" name="product_variant_id" value="{{ $variant->id }}">
-                                                <button type="submit" class="btn-outline btn-sm">&#9825;</button>
-                                            </form>
-                                        @else
-                                            <a href="{{ route('login') }}" class="btn-primary btn-sm">Log in to buy</a>
-                                        @endauth
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    @endif
 @endsection

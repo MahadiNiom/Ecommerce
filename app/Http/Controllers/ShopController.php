@@ -32,7 +32,7 @@ class ShopController extends Controller
 
     public function show(Product $product): View
     {
-        $product->load(['category', 'brand', 'tags', 'productVariants.variantOptions.variant']);
+        $product->load(['category', 'brand', 'tags', 'variants.variantOptions', 'productVariants.variantOptions.variant']);
 
         return view('shop.show', compact('product'));
     }
