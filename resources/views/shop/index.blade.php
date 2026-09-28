@@ -87,7 +87,9 @@
                             @if ($product->productVariants->isEmpty())
                                 @if ($product->price !== null)
                                     <span class="text-lg font-bold text-emerald-700">${{ $product->price }}</span>
-                                    @if ($product->stock < 1)
+                                    @if ($product->stock === null)
+                                        <span class="badge-stone">Not tracked</span>
+                                    @elseif ($product->stock < 1)
                                         <span class="badge-red">Out of stock</span>
                                     @else
                                         <span class="badge-green">In stock</span>

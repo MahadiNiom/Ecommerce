@@ -23,6 +23,7 @@ class Order extends Model
         'shipping_city',
         'shipping_zip',
         'shipping_country',
+        'stock_released_at',
     ];
 
     protected function casts(): array
@@ -30,6 +31,7 @@ class Order extends Model
         return [
             'total' => 'decimal:2',
             'status' => OrderStatus::class,
+            'stock_released_at' => 'datetime',
         ];
     }
 

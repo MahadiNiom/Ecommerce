@@ -5,6 +5,12 @@
 @section('content')
     <h1 class="page-title animate-fade-in-up">Checkout</h1>
 
+    @if ($errors->any())
+        <div class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
     @if ($cart->items->isEmpty())
         <div class="card mt-8 flex flex-col items-center gap-4 px-6 py-16 text-center animate-fade-in-up">
             <span class="text-6xl" aria-hidden="true">&#128722;</span>
@@ -63,10 +69,16 @@
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
                             Back to cart
                         </a>
-                        <button type="submit" class="btn-amber w-full sm:w-auto">
-                            Place order
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
-                        </button>
+                        @if ($hasUnavailableItems)
+                            <button type="button" disabled class="btn-amber w-full cursor-not-allowed opacity-60 sm:w-auto">
+                                Resolve stock issues
+                            </button>
+                        @else
+                            <button type="submit" class="btn-amber w-full sm:w-auto">
+                                Place order
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                            </button>
+                        @endif
                     </div>
                 </form>
             </div>
@@ -81,6 +93,9 @@
                                 <div>
                                     <p class="font-medium text-stone-800">{{ $item->product_name }}</p>
                                     <p class="text-xs text-stone-500">{{ $item->variant_label ?: 'No options' }} &times; {{ $item->quantity }}</p>
+                                    @if ($unavailableItemIds->contains($item->id))
+                                        <span class="mt-1 inline-block text-xs font-semibold text-red-600">Insufficient stock</span>
+                                    @endif
                                 </div>
                                 <span class="shrink-0 font-semibold text-stone-800">${{ $item->line_total }}</span>
                             </div>

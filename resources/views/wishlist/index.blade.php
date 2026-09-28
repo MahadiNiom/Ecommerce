@@ -31,15 +31,21 @@
                         <td class="text-stone-500">{{ $wishlistItem->variant_label ?: '-' }}</td>
                         <td>${{ $wishlistItem->unit_price }}</td>
                         <td>
-                            @if (($wishlistItem->stock ?? 0) > 0)
-                                <span class="badge-green">{{ $wishlistItem->stock }} in stock</span>
+                            @if (! ($availability[$wishlistItem->id] ?? false))
+                                @if (($wishlistItem->stock ?? 0) === 0)
+                                    <span class="badge-red">Out of stock</span>
+                                @else
+                                    <span class="badge-red">No longer available</span>
+                                @endif
+                            @elseif ($wishlistItem->stock === null)
+                                <span class="badge-stone">Not tracked</span>
                             @else
-                                <span class="badge-red">Out of stock</span>
+                                <span class="badge-green">{{ $wishlistItem->stock }} in stock</span>
                             @endif
                         </td>
                         <td>
                             <div class="flex items-center justify-end gap-2">
-                                @if (($wishlistItem->stock ?? 0) > 0)
+                                @if ($availability[$wishlistItem->id] ?? false)
                                     <form action="{{ route('cart.store') }}" method="POST" class="inline">
                                         @csrf
                                         @if ($wishlistItem->product_variant_id !== null)

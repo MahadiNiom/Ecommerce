@@ -3,6 +3,7 @@
     $wishlistCount = auth()->user()?->wishlistItems()->count() ?? 0;
     $user = auth()->user();
     $canViewProducts = \App\Support\Permissions::canAny($user, \App\Support\Permissions::products());
+    $canViewInventory = \App\Support\Permissions::canAny($user, [\App\Support\Permissions::VIEW_PRODUCTS]);
     $canViewCategories = \App\Support\Permissions::canAny($user, \App\Support\Permissions::categories());
     $canViewBrands = \App\Support\Permissions::canAny($user, \App\Support\Permissions::brands());
     $canViewTags = \App\Support\Permissions::canAny($user, \App\Support\Permissions::tags());
@@ -47,6 +48,9 @@
                             @if ($canViewProducts || $canViewCategories || $canViewBrands || $canViewTags)
                                 @if ($canViewProducts)
                                     <a href="{{ route('products.index') }}" class="block rounded-xl px-3 py-2 text-sm text-stone-700 transition-colors hover:bg-emerald-50 hover:text-emerald-800">Products</a>
+                                @endif
+                                @if ($canViewInventory)
+                                    <a href="{{ route('admin.inventory.index') }}" class="block rounded-xl px-3 py-2 text-sm text-stone-700 transition-colors hover:bg-emerald-50 hover:text-emerald-800">Inventory</a>
                                 @endif
                                 @if ($canViewCategories)
                                     <a href="{{ route('categories.index') }}" class="block rounded-xl px-3 py-2 text-sm text-stone-700 transition-colors hover:bg-emerald-50 hover:text-emerald-800">Categories</a>
@@ -143,6 +147,9 @@
                     <p class="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-stone-400">Manage</p>
                     @if ($canViewProducts)
                         <a href="{{ route('products.index') }}" class="block rounded-xl px-3 py-2 text-sm text-stone-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800">Products</a>
+                    @endif
+                    @if ($canViewInventory)
+                        <a href="{{ route('admin.inventory.index') }}" class="block rounded-xl px-3 py-2 text-sm text-stone-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800">Inventory</a>
                     @endif
                     @if ($canViewCategories)
                         <a href="{{ route('categories.index') }}" class="block rounded-xl px-3 py-2 text-sm text-stone-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800">Categories</a>

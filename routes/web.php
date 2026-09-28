@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductController;
@@ -60,6 +61,13 @@ Route::middleware('auth')->group(function () {
     Route::patch('/admin/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])
         ->middleware('permission:update order status')
         ->name('admin.orders.status.update');
+
+    Route::get('/admin/inventory', [InventoryController::class, 'index'])
+        ->middleware('permission:view products')
+        ->name('admin.inventory.index');
+    Route::patch('/admin/inventory/adjust', [InventoryController::class, 'adjust'])
+        ->middleware('permission:edit products')
+        ->name('admin.inventory.adjust');
 
     Route::resource('products', ProductController::class)
         ->middlewareFor(['index', 'show'], 'permission:view products')

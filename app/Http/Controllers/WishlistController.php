@@ -4,18 +4,25 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreWishlistItemRequest;
 use App\Models\WishlistItem;
+use App\Services\InventoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class WishlistController extends Controller
 {
-    public function index(): View
+    public function index(InventoryService $inventory): View
     {
         $wishlist = auth()->user()->wishlistItems()
             ->with(['productVariant.product', 'productVariant.variantOptions.variant', 'product'])
             ->get();
+        $availability = $wishlist->mapWithKeys(fn (WishlistItem $item): array => [
+            $item->id => $inventory->canFulfill($item->productVariant ?? $item->product, 1),
+        ]);
 
-        return view('wishlist.index', compact('wishlist'));
+        return view('wishlist.index', [
+            'wishlist' => $wishlist,
+            'availability' => $availability,
+        ]);
     }
 
     public function store(StoreWishlistItemRequest $request): RedirectResponse

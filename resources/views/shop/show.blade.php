@@ -44,13 +44,21 @@
         <aside class="animate-fade-in-up [animation-delay:0.1s]">
             <div class="card sticky top-24 p-6">
                 @if ($product->productVariants->isEmpty())
+                    @php
+                        $canPurchase = $product->stock === null || $product->stock > 0;
+                        $maxQuantity = $product->stock === null ? 99 : min($product->stock, 99);
+                    @endphp
                     @if ($product->price !== null)
                         <p class="text-sm text-stone-500">Price</p>
                         <p class="text-3xl font-bold text-emerald-700">${{ $product->price }}</p>
 
-                        @if ($product->stock > 0)
+                        @if ($canPurchase)
                             <div class="mt-4 flex items-center gap-2">
-                                <span class="badge-green rounded-lg">In stock: {{ $product->stock }}</span>
+                                @if ($product->stock === null)
+                                    <span class="badge-stone rounded-lg">Stock not tracked</span>
+                                @else
+                                    <span class="badge-green rounded-lg">In stock: {{ $product->stock }}</span>
+                                @endif
                             </div>
                             @auth
                                 <div class="mt-6 space-y-3" x-data="{ qty: 1 }">
@@ -61,8 +69,8 @@
                                         <label class="label">Quantity</label>
                                         <div class="flex items-center gap-2">
                                             <button type="button" @click="qty = Math.max(1, qty - 1)" class="btn-outline btn-sm !px-3">&#8722;</button>
-                                            <input type="number" x-model.number="qty" min="1" max="{{ min($product->stock, 99) }}" class="input text-center">
-                                            <button type="button" @click="qty = Math.min({{ min($product->stock, 99) }}, qty + 1)" class="btn-outline btn-sm !px-3">+</button>
+                                            <input type="number" x-model.number="qty" min="1" max="{{ $maxQuantity }}" class="input text-center">
+                                            <button type="button" @click="qty = Math.min({{ $maxQuantity }}, qty + 1)" class="btn-outline btn-sm !px-3">+</button>
                                         </div>
                                         <button type="submit" class="btn-primary mt-4 w-full">
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
@@ -135,7 +143,7 @@
                             select(typeId, optionId) {
                                 this.selection[typeId] = optionId;
                                 this.recompute();
-                                this.qty = Math.max(1, Math.min(this.qty, this.selectedStock || 1));
+                                this.qty = Math.max(1, Math.min(99, this.qty, this.selectedStock || 1));
                             },
                             isSelected(typeId, optionId) {
                                 return this.selection[typeId] === optionId;
@@ -209,8 +217,8 @@
                                     <label class="label">Quantity</label>
                                     <div class="flex items-center gap-2">
                                         <button type="button" @click="qty = Math.max(1, qty - 1)" class="btn-outline btn-sm !px-3">&#8722;</button>
-                                        <input type="number" x-model.number="qty" :max="selectedStock" min="1" class="input text-center">
-                                        <button type="button" @click="qty = Math.min(selectedStock, qty + 1)" class="btn-outline btn-sm !px-3">+</button>
+                                        <input type="number" x-model.number="qty" :max="Math.min(selectedStock, 99)" min="1" class="input text-center">
+                                        <button type="button" @click="qty = Math.min(selectedStock, 99, qty + 1)" class="btn-outline btn-sm !px-3">+</button>
                                     </div>
                                     <button type="submit" class="btn-primary mt-4 w-full">
                                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>

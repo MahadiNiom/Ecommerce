@@ -67,6 +67,11 @@ class CartItem extends Model
         return $this->productVariant?->price ?? $this->product?->price;
     }
 
+    public function getStockAttribute(): ?int
+    {
+        return $this->productVariant?->stock ?? $this->product?->stock;
+    }
+
     /**
      * Value of this line, e.g. "12.34".
      */

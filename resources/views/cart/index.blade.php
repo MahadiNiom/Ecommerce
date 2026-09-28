@@ -5,6 +5,18 @@
 @section('content')
     <h1 class="page-title animate-fade-in-up">Your Cart</h1>
 
+    @if (session('success'))
+        <div class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
     @if ($cart->items->isEmpty())
         <div class="card mt-8 flex flex-col items-center gap-4 px-6 py-16 text-center animate-fade-in-up">
             <span class="text-6xl" aria-hidden="true">&#128722;</span>
@@ -29,15 +41,34 @@
                     </thead>
                     <tbody>
                     @foreach ($cart->items as $item)
+                        @php
+                            $stock = $item->productVariant?->stock ?? $item->product?->stock;
+                            $maxQuantity = max(1, min(99, $stock ?? 99));
+                        @endphp
                         <tr>
-                            <td class="font-medium text-stone-800">{{ $item->product_name }}</td>
+                            <td class="font-medium text-stone-800">
+                                {{ $item->product_name }}
+                                @if (! ($availability[$item->id] ?? false))
+                                    @if ($stock === 0)
+                                        <span class="mt-1 block text-xs font-semibold text-red-600">Out of stock</span>
+                                    @elseif ($stock !== null)
+                                        <span class="mt-1 block text-xs font-semibold text-red-600">Only {{ $stock }} left</span>
+                                    @else
+                                        <span class="mt-1 block text-xs font-semibold text-red-600">No longer available</span>
+                                    @endif
+                                @elseif ($stock === null)
+                                    <span class="mt-1 block text-xs text-stone-500">Stock not tracked</span>
+                                @elseif ($stock <= 5)
+                                    <span class="mt-1 block text-xs font-semibold text-amber-600">Low stock: {{ $stock }} left</span>
+                                @endif
+                            </td>
                             <td class="text-stone-500">{{ $item->variant_label ?: '-' }}</td>
                             <td>${{ $item->unit_price }}</td>
                             <td>
                                 <form action="{{ route('cart.update', $item) }}" method="POST" class="flex items-center gap-2">
                                     @csrf
                                     @method('PUT')
-                                    <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="99" class="input w-20 text-center">
+                                    <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ $maxQuantity }}" class="input w-20 text-center">
                                     <button type="submit" class="btn-sm btn-outline shrink-0">Update</button>
                                 </form>
                             </td>
@@ -75,10 +106,16 @@
                         <span class="font-semibold text-stone-900">Total</span>
                         <span class="text-2xl font-bold text-emerald-700">${{ $cart->total() }}</span>
                     </div>
-                    <a href="{{ route('checkout.create') }}" class="btn-amber mt-6 w-full">
-                        Proceed to checkout
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
-                    </a>
+                    @if ($hasUnavailableItems)
+                        <div class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-center">
+                            <p class="text-sm font-semibold text-red-800">Update or remove unavailable items before checkout.</p>
+                        </div>
+                    @else
+                        <a href="{{ route('checkout.create') }}" class="btn-amber mt-6 w-full">
+                            Proceed to checkout
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                        </a>
+                    @endif
                     <a href="{{ route('shop.index') }}" class="btn-ghost mt-2 w-full">Continue shopping</a>
                 </div>
             </aside>
