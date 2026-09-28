@@ -5,12 +5,22 @@
 @section('content')
     <div class="flex flex-col gap-1 animate-fade-in-up">
         <h1 class="page-title">Shop</h1>
-        <p class="page-subtitle">{{ $products->count() }} product{{ $products->count() === 1 ? '' : 's' }} hand-picked for you</p>
+        <p class="page-subtitle">
+            @if (request('q'))
+                {{ $products->count() }} match{{ $products->count() === 1 ? '' : 'es' }} for &ldquo;{{ request('q') }}&rdquo;
+            @else
+                {{ $products->count() }} product{{ $products->count() === 1 ? '' : 's' }} hand-picked for you
+            @endif
+        </p>
     </div>
 
     {{-- Filters --}}
     <form action="{{ route('shop.index') }}" method="GET" class="card mt-6 animate-fade-in-up p-4 [animation-delay:0.1s] sm:p-5">
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto_auto]">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto_auto]">
+            <div>
+                <label for="q" class="label">Search</label>
+                <input id="q" name="q" value="{{ request('q') }}" class="input" placeholder="Search products" autocomplete="off">
+            </div>
             <div>
                 <label for="category" class="label">Category</label>
                 <select id="category" name="category" class="select">
@@ -48,7 +58,7 @@
                 <button type="submit" class="btn-primary w-full sm:w-auto">Filter</button>
             </div>
             <div class="flex items-end">
-                @if (request('category') || request('brand') || request('tag'))
+                @if (request('q') || request('category') || request('brand') || request('tag'))
                     <a href="{{ route('shop.index') }}" class="btn-ghost w-full sm:w-auto">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                         Clear
@@ -84,9 +94,12 @@
                         </div>
                         <h3 class="mt-3 font-semibold text-stone-900 transition-colors group-hover:text-emerald-700">{{ $product->name }}</h3>
                         <div class="mt-auto flex items-center justify-between pt-4">
-                            @if ($product->productVariants->isEmpty())
-                                @if ($product->price !== null)
-                                    <span class="text-lg font-bold text-emerald-700">${{ $product->price }}</span>
+                            @php $price = $product->priceLabel(); @endphp
+                            @if ($price === null)
+                                <span class="badge-stone">Unavailable</span>
+                            @else
+                                <span class="text-lg font-bold text-emerald-700">{{ $price }}</span>
+                                @if ($product->productVariants->isEmpty())
                                     @if ($product->stock === null)
                                         <span class="badge-stone">Not tracked</span>
                                     @elseif ($product->stock < 1)
@@ -94,11 +107,7 @@
                                     @else
                                         <span class="badge-green">In stock</span>
                                     @endif
-                                @else
-                                    <span class="badge-stone">Unavailable</span>
                                 @endif
-                            @else
-                                <span class="text-lg font-bold text-emerald-700">From ${{ number_format($product->productVariants->min('price'), 2) }}</span>
                             @endif
                         </div>
                     </div>

@@ -13,8 +13,11 @@ class ShopController extends Controller
 {
     public function index(Request $request): View
     {
+        $term = trim($request->string('q')->toString());
+
         $products = Product::query()
             ->with(['category', 'brand', 'tags', 'productVariants'])
+            ->when($term !== '', fn ($query) => $query->matchingSearchTerm($term))
             ->when($request->filled('category'), fn ($query) => $query->where('category_id', $request->integer('category')))
             ->when($request->filled('brand'), fn ($query) => $query->where('brand_id', $request->integer('brand')))
             ->when($request->filled('tag'), fn ($query) => $query->whereHas('tags', fn ($query) => $query->where('tags.id', $request->integer('tag'))))
@@ -26,7 +29,7 @@ class ShopController extends Controller
             'categories' => Category::tree(),
             'brands' => Brand::withCount('products')->orderBy('name')->get(),
             'tags' => Tag::withCount('products')->orderBy('name')->get(),
-            'filters' => $request->only(['category', 'brand', 'tag']),
+            'filters' => $request->only(['q', 'category', 'brand', 'tag']),
         ]);
     }
 

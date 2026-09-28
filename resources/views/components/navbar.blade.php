@@ -16,7 +16,7 @@
 
 <nav x-data="{ mobileOpen: false, manageOpen: false, userOpen: false }"
      class="sticky top-0 z-40 border-b border-stone-200/70 bg-white/80 backdrop-blur-lg">
-    <div class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto flex min-h-16 w-full max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-3 sm:px-6 lg:px-8">
 
         {{-- Logo --}}
         <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2 transition-transform hover:scale-[1.02]">
@@ -82,6 +82,45 @@
                 @endif
             @endauth
         </div>
+
+        {{-- Live search --}}
+        <form action="{{ route('shop.index') }}" method="GET" role="search"
+              data-search
+              data-search-endpoint="{{ route('search') }}"
+              class="relative order-last w-full sm:order-none sm:mx-2 sm:w-56 lg:w-72">
+            <label for="site-search" class="sr-only">Search products</label>
+            <div class="relative">
+                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                <input id="site-search"
+                       name="q"
+                       type="search"
+                       value="{{ request('q') }}"
+                       autocomplete="off"
+                       placeholder="Search products&hellip;"
+                       data-search-input
+                       role="combobox"
+                       aria-expanded="false"
+                       aria-controls="site-search-listbox"
+                       aria-autocomplete="list"
+                       aria-describedby="site-search-status"
+                       class="input !py-2 pl-9 pr-9 text-sm [&::-webkit-search-cancel-button]:hidden">
+                <button type="button" data-search-clear hidden aria-label="Clear search"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <p id="site-search-status" data-search-status role="status" aria-live="polite" class="sr-only"></p>
+
+            <div id="site-search-listbox" data-search-panel role="listbox" aria-label="Search results" hidden
+                 class="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl border border-stone-200 bg-white p-1.5 text-left shadow-lift">
+                <div data-search-list></div>
+                <a href="{{ route('shop.index') }}" data-search-all hidden
+                   class="mt-1 block rounded-xl border-t border-stone-100 px-3 py-2 text-center text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50">
+                    See all results
+                </a>
+            </div>
+        </form>
 
         {{-- Right actions --}}
         <div class="flex items-center gap-2">
