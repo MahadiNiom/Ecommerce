@@ -1,6 +1,7 @@
 {
   "version": 2,
   "framework": null,
+
   "builds": [
     {
       "src": "api/index.php",
@@ -11,10 +12,11 @@
       "use": "@vercel/static"
     }
   ],
+
   "routes": [
     {
       "src": "/build/(.*)",
-      "dest": "/build/$1"
+      "dest": "/public/build/$1"
     },
     {
       "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot|json))$",
@@ -25,6 +27,7 @@
       "dest": "/api/index.php"
     }
   ],
+
   "env": {
     "APP_ENV": "production",
     "APP_DEBUG": "false",
@@ -33,10 +36,6 @@
     "SESSION_DRIVER": "cookie",
     "VIEW_COMPILED_PATH": "/tmp"
   },
-  "outputDirectory": "public",
-  "functions": {
-    "api/index.php": {
-      "runtime": "vercel-php@0.7.4"
-    }
-  }
+
+  "outputDirectory": "public"
 }
